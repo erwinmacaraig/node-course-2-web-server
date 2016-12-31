@@ -1,13 +1,32 @@
 //load express
 const express = require('express');
 const hbs = require('hbs');
+const fs = require('fs');
 
 //making a new express app
 var app = express();
 
 hbs.registerPartials(__dirname + '/views/partials');
 app.set('view engine', 'hbs');
+//app.use is how we register a middleware
+//next exist to signal your middleware is done
+app.use((req, res, next) => {
+  var now = new Date().toString();
+  var log = `${now}: ${req.method} ${req.url}`;
+  fs.appendFile('server.log', log + '\n', (error) => {
+    if(error) {
+      console.log('Cannot open file for writing');
+    }
+  });
+  console.log(log);
+  next();
+});
+
+app.use((req, res, next) => {
+  res.render('maintenance.hbs');
+});
 app.use(express.static(__dirname + '/public'));
+
 hbs.registerHelper('getCurrentYear', () => {
   return new Date().getFullYear();
 });
@@ -18,16 +37,6 @@ hbs.registerHelper('screamIt', (text) => {
 
 //for http GET method
 app.get('/', (req, res) => {
-  //res.send('Hello Express');
-  //res.send('<h1>Hello Express!</h1>');
-  // res.send({
-  //   name: 'Erwin Pogi',
-  //   likes: [
-  //     'Biking',
-  //     'Basketball',
-  //     'Running'
-  //   ]
-  // });
   res.render('home.hbs', {
     pageTitle: 'Home Page',
     welcomeMessage: 'Welcome to my website'
@@ -36,8 +45,7 @@ app.get('/', (req, res) => {
 
 //setting up another route
 app.get('/about', (req, res) => {
-  //res.send('About page');
-  res.render('about.hbs',{
+    res.render('about.hbs',{
     pageTitle: 'About Page'
 
   });
